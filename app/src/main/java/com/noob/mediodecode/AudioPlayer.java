@@ -27,7 +27,7 @@ public class AudioPlayer {
 			release();
 		}
 		// 获得构建对象的最小缓冲区大小
-		int minBufSize = getMinBufferSize();
+		int minBufSize = AudioTrack.getMinBufferSize(mFrequency, mChannel, mSampBit);
 		mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
 				mFrequency, mChannel, mSampBit, minBufSize, AudioTrack.MODE_STREAM);
 		mAudioTrack.play();
@@ -50,7 +50,7 @@ public class AudioPlayer {
 	 * @param offset 偏移
 	 * @param length 需要播放的长度
 	 */
-	public void playAudioTrack(byte[] data, int offset, int length) {
+	public void play(byte[] data, int offset, int length) {
 		if (data == null || data.length == 0) {
 			return;
 		}
@@ -61,8 +61,4 @@ public class AudioPlayer {
 		}
 	}
 
-	private int getMinBufferSize() {
-		return AudioTrack.getMinBufferSize(mFrequency,
-				mChannel, mSampBit);
-	}
 }

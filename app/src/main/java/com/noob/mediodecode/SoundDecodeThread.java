@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 
 public class SoundDecodeThread extends Thread {
 
-	private final static String TAG = "VideoDecodeThread";
+	private final static String TAG = "SoundDecodeThread";
 
 	private MediaCodec mediaCodec;
 
@@ -117,7 +117,7 @@ public class SoundDecodeThread extends Thread {
 					//清空缓存
 					buffer.clear();
 					//播放解码后的数据
-					mPlayer.playAudioTrack(outData, 0, info.size);
+					mPlayer.play(outData, 0, info.size);
 					mediaCodec.releaseOutputBuffer(outIndex, true);
 					break;
 			}
@@ -125,7 +125,6 @@ public class SoundDecodeThread extends Thread {
 			// All decoded frames have been rendered, we can stop playing
 			// now
 			if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-				Log.d("DecodeActivity", "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
 				break;
 			}
 		}

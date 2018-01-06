@@ -69,10 +69,10 @@ public class VideoDecodeThread extends Thread {
 		}
 
 		mediaCodec.start(); // 启动MediaCodec ，等待传入数据
-		ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers(); // 用来存放目标文件的数据
 		// 输入
-		ByteBuffer[] outputBuffers = mediaCodec.getOutputBuffers(); // 解码后的数据
+		ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers(); // 用来存放目标文件的数据
 		// 输出
+		ByteBuffer[] outputBuffers = mediaCodec.getOutputBuffers(); // 解码后的数据
 		MediaCodec.BufferInfo info = new MediaCodec.BufferInfo(); // 用于描述解码得到的byte[]数据的相关信息
 		boolean bIsEos = false;
 		long startMs = System.currentTimeMillis();
@@ -129,7 +129,6 @@ public class VideoDecodeThread extends Thread {
 			// All decoded frames have been rendered, we can stop playing
 			// now
 			if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-				Log.d("DecodeActivity", "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
 				break;
 			}
 		}
