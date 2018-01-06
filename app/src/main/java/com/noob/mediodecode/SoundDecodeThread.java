@@ -5,7 +5,6 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
-import android.view.Surface;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,16 +15,11 @@ import java.nio.ByteBuffer;
 
 public class SoundDecodeThread extends Thread {
 
-	private final static String TAG = "DecodeThread";
+	private final static String TAG = "VideoDecodeThread";
 
-	private MediaExtractor mediaExtractor;
-	/** 用来读取音視频文件 提取器 */
 	private MediaCodec mediaCodec;
-	/** 用来解码 解碼器 */
-	private Surface surface;
 
-	MyAudioTrack mPlayer;
-	private static final int KEY_SAMPLE_RATE = 48000;
+	private AudioPlayer mPlayer;
 	private String path;
 
 	public SoundDecodeThread(String path) {
@@ -34,26 +28,26 @@ public class SoundDecodeThread extends Thread {
 
 	@Override
 	public void run() {
-		mediaExtractor = new MediaExtractor();
+		MediaExtractor mediaExtractor = new MediaExtractor();
 		try {
 			mediaExtractor.setDataSource(path); // 设置数据源
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 
-		String mimeType = null;
+		String mimeType;
 		for (int i = 0; i < mediaExtractor.getTrackCount(); i++) { // 信道总数
 			MediaFormat format = mediaExtractor.getTrackFormat(i); // 音频文件信息
 			mimeType = format.getString(MediaFormat.KEY_MIME);
-			if (mimeType.startsWith("audio/")) { // 视频信道
-				mediaExtractor.selectTrack(i); // 切换到视频信道
+			if (mimeType.startsWith("audio/")) { // 音频信道
+				mediaExtractor.selectTrack(i); // 切换到 音频信道
 				try {
 					mediaCodec = MediaCodec.createDecoderByType(mimeType); // 创建解码器,提供数据输出
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				mediaCodec.configure(format, surface, null, 0);
-				mPlayer = new MyAudioTrack(format.getInteger(MediaFormat.KEY_SAMPLE_RATE), AudioFormat
+				mediaCodec.configure(format, null, null, 0);
+				mPlayer = new AudioPlayer(format.getInteger(MediaFormat.KEY_SAMPLE_RATE), AudioFormat
 						.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
 				mPlayer.init();
 				break;
@@ -77,7 +71,7 @@ public class SoundDecodeThread extends Thread {
 		while (!Thread.interrupted()) {
 
 			if (!bIsEos) {
-				int inIndex = mediaCodec.dequeueInputBuffer(10000);
+				int inIndex = mediaCodec.dequeueInputBuffer(0);
 				if (inIndex >= 0) {
 					ByteBuffer buffer = inputBuffers[inIndex];
 					int nSampleSize = mediaExtractor.readSampleData(buffer, 0); // 读取一帧数据至buffer中
@@ -93,7 +87,7 @@ public class SoundDecodeThread extends Thread {
 				}
 			}
 
-			int outIndex = mediaCodec.dequeueOutputBuffer(info, 10000);
+			int outIndex = mediaCodec.dequeueOutputBuffer(info, 0);
 			switch (outIndex) {
 				case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
 					Log.d(TAG, "INFO_OUTPUT_BUFFERS_CHANGED");
@@ -109,9 +103,6 @@ public class SoundDecodeThread extends Thread {
 					ByteBuffer buffer = outputBuffers[outIndex];
 					Log.v(TAG, "We can't use this buffer but render it due to the API limit, " + buffer);
 
-					// We use a very simple clock to keep the video FPS, or the
-					// video
-					// playback will be too fast
 					while (info.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {
 						try {
 							sleep(10);
@@ -120,12 +111,6 @@ public class SoundDecodeThread extends Thread {
 							break;
 						}
 					}
-
-//					if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-//						 这里可以从ByteBuffer中获取csd参数
-//						mediaCodec.releaseOutputBuffer(outIndex, false);
-//						return;
-//					}
 					//用来保存解码后的数据
 					byte[] outData = new byte[info.size];
 					buffer.get(outData);
@@ -143,7 +128,7 @@ public class SoundDecodeThread extends Thread {
 				Log.d("DecodeActivity", "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
 				break;
 			}
-		} // end while
+		}
 
 		mediaCodec.stop();
 		mediaCodec.release();

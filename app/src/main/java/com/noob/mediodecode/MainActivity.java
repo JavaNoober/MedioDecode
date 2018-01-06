@@ -1,12 +1,10 @@
 package com.noob.mediodecode;
 
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 	VideoPlayView playView;
-	private static final String strVideo = Environment.getExternalStorageDirectory().getPath() + "/qwwz.mp4";
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -18,6 +16,11 @@ public class MainActivity extends AppCompatActivity {
 	protected void onResume() {
 		super.onResume();
 		playView.start();
-		new SoundDecodeThread(strVideo).start();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		playView.stop();
 	}
 }
